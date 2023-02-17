@@ -19,6 +19,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.URL
+import android.content.Context
+import android.view.inputmethod.InputMethodManager
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
@@ -54,10 +57,16 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // Get references to UI elements
-        val twdEditText = findViewById<EditText>(R.id.editText)
-        val convertButton = findViewById<Button>(R.id.convertButton)
+        val twdEditText = binding.editText
+        val convertButton = binding.convertButton
+        val jpyTextView = binding.resultTextView
+
 
         convertButton.setOnClickListener {
+            // Hide the keyboard
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(twdEditText.windowToken, 0)
+
             // Get TWD amount from the EditText
             val twdAmount = twdEditText.text.toString().toDoubleOrNull()
 
@@ -69,8 +78,8 @@ class MainActivity : AppCompatActivity() {
 
             // Convert TWD to JPY using the exchange rate API
             fetchExchangeRate("TWD", "JPY", twdAmount, onSuccess = { jpyAmount ->
-                // Show the converted amount in a Snackbar message
-                Snackbar.make(binding.root, "$twdAmount TWD is approximately $jpyAmount JPY", Snackbar.LENGTH_SHORT).show()
+                // Show the converted amount in the jpyTextView
+                jpyTextView.text = "$twdAmount TWD is approximately $jpyAmount JPY"
             }, onError = { error ->
                 // Show an error message in a Snackbar
                 Snackbar.make(binding.root, "Error: $error", Snackbar.LENGTH_SHORT).show()
@@ -98,4 +107,5 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
 }
