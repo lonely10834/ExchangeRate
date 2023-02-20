@@ -29,7 +29,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
     // Define a list of currencies to support
-    private val currencies = listOf("CAD", "USD", "TWD", "JPY")
+    private val currencies = listOf("TWD", "USD", "JPY", "CAD")
+
 
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -56,14 +57,20 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         // Get references to UI elements
-        val currencyEditText = binding.editText
+        val currencyEditText = binding.amountEditText
         val convertButton = binding.convertButton
         val resultTextView = binding.resultTextView
+
+        // Populate the spinners with currencies
+        ArrayAdapter(this, android.R.layout.simple_spinner_item, currencies).also { adapter ->
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            binding.fromCurrencySpinner.adapter = adapter
+            binding.toCurrencySpinner.adapter = adapter
+        }
 
         convertButton.setOnClickListener {
             // Hide the keyboard
@@ -80,8 +87,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             // Get the selected currencies
-            val fromCurrency = currencies[binding.fromSpinner.selectedItemPosition]
-            val toCurrency = currencies[binding.toSpinner.selectedItemPosition]
+            val fromCurrency = currencies[binding.fromCurrencySpinner.selectedItemPosition]
+            val toCurrency = currencies[binding.toCurrencySpinner.selectedItemPosition]
 
             // Convert the currency using the exchange rate API
             fetchExchangeRate(fromCurrency, toCurrency, currencyAmount, onSuccess = { convertedAmount ->
@@ -93,13 +100,10 @@ class MainActivity : AppCompatActivity() {
             })
         }
 
-        // Populate the spinners with currencies
-        ArrayAdapter(this, android.R.layout.simple_spinner_item, currencies).also { adapter ->
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            binding.fromSpinner.adapter = adapter
-            binding.toSpinner.adapter = adapter
-        }
+        // Set the title of the app bar
+        supportActionBar?.title = "Currency Converter"
     }
+
 
 
 
