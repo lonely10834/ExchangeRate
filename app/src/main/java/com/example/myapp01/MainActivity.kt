@@ -21,11 +21,15 @@ import org.json.JSONObject
 import java.net.URL
 import android.content.Context
 import android.view.inputmethod.InputMethodManager
+import android.widget.ArrayAdapter
+
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
+    // Define a list of currencies to support
+    private val currencies = listOf("CAD", "USD", "TWD", "JPY")
 
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -57,35 +61,47 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // Get references to UI elements
-        val twdEditText = binding.editText
+        val currencyEditText = binding.editText
         val convertButton = binding.convertButton
-        val jpyTextView = binding.resultTextView
-
+        val resultTextView = binding.resultTextView
 
         convertButton.setOnClickListener {
             // Hide the keyboard
             val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            imm.hideSoftInputFromWindow(twdEditText.windowToken, 0)
+            imm.hideSoftInputFromWindow(currencyEditText.windowToken, 0)
 
-            // Get TWD amount from the EditText
-            val twdAmount = twdEditText.text.toString().toDoubleOrNull()
+            // Get currency amount from the EditText
+            val currencyAmount = currencyEditText.text.toString().toDoubleOrNull()
 
             // If the input is not a valid number, show an error message and return
-            if (twdAmount == null) {
+            if (currencyAmount == null) {
                 Snackbar.make(binding.root, "Please enter a valid number", Snackbar.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // Convert TWD to JPY using the exchange rate API
-            fetchExchangeRate("TWD", "JPY", twdAmount, onSuccess = { jpyAmount ->
-                // Show the converted amount in the jpyTextView
-                jpyTextView.text = "$twdAmount TWD is approximately $jpyAmount JPY"
+            // Get the selected currencies
+            val fromCurrency = currencies[binding.fromSpinner.selectedItemPosition]
+            val toCurrency = currencies[binding.toSpinner.selectedItemPosition]
+
+            // Convert the currency using the exchange rate API
+            fetchExchangeRate(fromCurrency, toCurrency, currencyAmount, onSuccess = { convertedAmount ->
+                // Show the converted amount in the resultTextView
+                resultTextView.text = convertedAmount.toString()
             }, onError = { error ->
                 // Show an error message in a Snackbar
                 Snackbar.make(binding.root, "Error: $error", Snackbar.LENGTH_SHORT).show()
             })
         }
+
+        // Populate the spinners with currencies
+        ArrayAdapter(this, android.R.layout.simple_spinner_item, currencies).also { adapter ->
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            binding.fromSpinner.adapter = adapter
+            binding.toSpinner.adapter = adapter
+        }
     }
+
+
 
     private fun fetchExchangeRate(fromCurrency: String, toCurrency: String, amount: Double, onSuccess: (Double) -> Unit, onError: (String) -> Unit) {
         CoroutineScope(Dispatchers.IO).launch {
@@ -93,8 +109,10 @@ class MainActivity : AppCompatActivity() {
             try {
                 val apiResult = URL(url).readText()
                 val jsonObject = JSONObject(apiResult)
-                val exchangeRate = jsonObject.getJSONObject("rates").getDouble(toCurrency)
-                val convertedAmount = amount * exchangeRate
+                val rates = jsonObject.getJSONObject("rates")
+                val fromRate = rates.getDouble(fromCurrency)
+                val toRate = rates.getDouble(toCurrency)
+                val convertedAmount = amount / fromRate * toRate
                 Log.d("MainActivity", "$amount $fromCurrency = $convertedAmount $toCurrency")
                 withContext(Dispatchers.Main) {
                     onSuccess(convertedAmount)
@@ -107,5 +125,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
 
 }

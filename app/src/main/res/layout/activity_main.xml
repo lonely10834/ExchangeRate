@@ -7,29 +7,81 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".MainActivity">
-
-    <EditText
-        android:id="@+id/editText"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="numberDecimal"
-        android:hint="Enter TWD amount"
-        android:imeOptions="actionDone"/>
+        android:orientation="horizontal">
 
-    <Button
-        android:id="@+id/convertButton"
+        <Spinner
+            android:id="@+id/fromSpinner"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
+
+        <View
+            android:layout_width="16dp"
+            android:layout_height="match_parent"/>
+
+        <Spinner
+            android:id="@+id/toSpinner"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
+
+    </LinearLayout>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="國際匯率轉換"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="center"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/editText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Enter amount"
+            android:imeOptions="actionDone"
+            android:inputType="numberDecimal"
+            android:minHeight="48dp" />
+
+        <View
+            android:layout_width="16dp"
+            android:layout_height="match_parent"/>
+
+        <Button
+            android:id="@+id/convertButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Convert" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/resultLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Convert"/>
+        android:text="@string/result_label"
+        android:textSize="18sp"
+        android:textColor="#000"/>
 
     <TextView
         android:id="@+id/resultTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:hint="@string/result_hint"
         android:gravity="center"
-        android:textSize="24sp"
         android:padding="16dp"
-        android:textColor="#000"/>
+        android:textColor="#000"
+        android:textSize="24sp"
+        android:visibility="visible" />
+
 
 </LinearLayout>
-

@@ -9,4 +9,10 @@
 
     <string name="hello_first_fragment">Hello first fragment</string>
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="from_currency_label">From currency:</string>
+    <string name="to_currency_label">To currency:</string>
+    <string name="amount_hint">Enter amount</string>
+    <string name="result_label">Result:</string>
+    <string name="result_hint">Convert to selected currency</string>
+
 </resources>
