@@ -22,7 +22,9 @@ import java.net.URL
 import android.content.Context
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
-
+import java.util.Date
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,6 +33,10 @@ class MainActivity : AppCompatActivity() {
     // Define a list of currencies to support
     private val currencies = listOf("TWD", "USD", "JPY", "CAD")
 
+    fun Date.toSimpleString(pattern: String): String {
+        val formatter = SimpleDateFormat(pattern, Locale.getDefault())
+        return formatter.format(this)
+    }
 
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -91,13 +97,20 @@ class MainActivity : AppCompatActivity() {
             val toCurrency = currencies[binding.toCurrencySpinner.selectedItemPosition]
 
             // Convert the currency using the exchange rate API
-            fetchExchangeRate(fromCurrency, toCurrency, currencyAmount, onSuccess = { convertedAmount ->
-                // Show the converted amount in the resultTextView
-                resultTextView.text = convertedAmount.toString()
-            }, onError = { error ->
-                // Show an error message in a Snackbar
-                Snackbar.make(binding.root, "Error: $error", Snackbar.LENGTH_SHORT).show()
-            })
+            fetchExchangeRate(fromCurrency, toCurrency, currencyAmount,
+                onSuccess = { convertedAmount ->
+                    // Show the converted amount in the resultTextView
+                    resultTextView.text = convertedAmount.toString()
+                },
+                onError = { error ->
+                    // Show an error message in a Snackbar
+                    Snackbar.make(binding.root, "Error: $error", Snackbar.LENGTH_SHORT).show()
+                },
+                onFetchComplete = { message ->
+                    // Show the fetch completion message in a Snackbar
+                    Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT).show()
+                }
+            )
         }
 
         // Set the title of the app bar
@@ -105,9 +118,14 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-
-
-    private fun fetchExchangeRate(fromCurrency: String, toCurrency: String, amount: Double, onSuccess: (Double) -> Unit, onError: (String) -> Unit) {
+    private fun fetchExchangeRate(
+        fromCurrency: String,
+        toCurrency: String,
+        amount: Double,
+        onSuccess: (Double) -> Unit,
+        onError: (String) -> Unit,
+        onFetchComplete: (String) -> Unit
+    ) {
         CoroutineScope(Dispatchers.IO).launch {
             val url = "https://api.exchangerate-api.com/v4/latest/$fromCurrency"
             try {
@@ -120,6 +138,8 @@ class MainActivity : AppCompatActivity() {
                 Log.d("MainActivity", "$amount $fromCurrency = $convertedAmount $toCurrency")
                 withContext(Dispatchers.Main) {
                     onSuccess(convertedAmount)
+                    val updateTime = Date().toSimpleString("yyyy-MM-dd HH:mm:ss")
+                    onFetchComplete("Last updated: $updateTime")
                 }
             } catch (e: Exception) {
                 Log.e("MainActivity", e.toString())
