@@ -98,9 +98,10 @@ class MainActivity : AppCompatActivity() {
 
             // Convert the currency using the exchange rate API
             fetchExchangeRate(fromCurrency, toCurrency, currencyAmount,
-                onSuccess = { convertedAmount ->
+                onSuccess = { convertedAmount, toCurrency ->
                     // Show the converted amount in the resultTextView
-                    resultTextView.text = convertedAmount.toString()
+                    val result = "$convertedAmount $toCurrency"
+                    resultTextView.text = result
                 },
                 onError = { error ->
                     // Show an error message in a Snackbar
@@ -118,14 +119,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun fetchExchangeRate(
-        fromCurrency: String,
-        toCurrency: String,
-        amount: Double,
-        onSuccess: (Double) -> Unit,
-        onError: (String) -> Unit,
-        onFetchComplete: (String) -> Unit
-    ) {
+    private fun fetchExchangeRate(fromCurrency: String, toCurrency: String, amount: Double, onSuccess: (Double, String) -> Unit, onError: (String) -> Unit, onFetchComplete: (String) -> Unit) {
         CoroutineScope(Dispatchers.IO).launch {
             val url = "https://api.exchangerate-api.com/v4/latest/$fromCurrency"
             try {
@@ -135,9 +129,10 @@ class MainActivity : AppCompatActivity() {
                 val fromRate = rates.getDouble(fromCurrency)
                 val toRate = rates.getDouble(toCurrency)
                 val convertedAmount = amount / fromRate * toRate
-                Log.d("MainActivity", "$amount $fromCurrency = $convertedAmount $toCurrency")
+                val result = "$convertedAmount $toCurrency"
+                Log.d("MainActivity", "$amount $fromCurrency = $result")
                 withContext(Dispatchers.Main) {
-                    onSuccess(convertedAmount)
+                    onSuccess(convertedAmount, toCurrency)
                     val updateTime = Date().toSimpleString("yyyy-MM-dd HH:mm:ss")
                     onFetchComplete("Last updated: $updateTime")
                 }

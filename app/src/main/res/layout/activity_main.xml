@@ -117,11 +117,5 @@
         android:textColor="#000"
         android:textSize="20sp"
         android:visibility="visible" />
-    <TextView
-        android:id="@+id/updatedTextView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:padding="16dp" />
 
 </LinearLayout>
