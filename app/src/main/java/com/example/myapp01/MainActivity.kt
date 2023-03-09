@@ -25,40 +25,23 @@ import android.widget.ArrayAdapter
 import java.util.Date
 import java.text.SimpleDateFormat
 import java.util.*
+import java.io.FileWriter
+import java.io.File
+import android.net.ConnectivityManager
+import java.io.FileNotFoundException
+
+
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
     // Define a list of currencies to support
-    private val currencies = listOf("TWD", "USD", "JPY", "CAD")
-
+    private val currencies = arrayOf("TWD", "USD", "JPY", "CAD")
+    // Declare a lateinit variable for InputMethodManager
+    private lateinit var imm: InputMethodManager
     fun Date.toSimpleString(pattern: String): String {
         val formatter = SimpleDateFormat(pattern, Locale.getDefault())
         return formatter.format(this)
-    }
-
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        return when (item.itemId) {
-            R.id.action_settings -> true
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        return navController.navigateUp(appBarConfiguration)
-                || super.onSupportNavigateUp()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,6 +53,10 @@ class MainActivity : AppCompatActivity() {
         val currencyEditText = binding.amountEditText
         val convertButton = binding.convertButton
         val resultTextView = binding.resultTextView
+        initialExchangeRate(this)
+
+        // Initialize InputMethodManager
+        imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
 
         // Populate the spinners with currencies
         ArrayAdapter(this, android.R.layout.simple_spinner_item, currencies).also { adapter ->
@@ -78,9 +65,9 @@ class MainActivity : AppCompatActivity() {
             binding.toCurrencySpinner.adapter = adapter
         }
 
+
         convertButton.setOnClickListener {
             // Hide the keyboard
-            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             imm.hideSoftInputFromWindow(currencyEditText.windowToken, 0)
 
             // Get currency amount from the EditText
@@ -88,16 +75,21 @@ class MainActivity : AppCompatActivity() {
 
             // If the input is not a valid number, show an error message and return
             if (currencyAmount == null) {
-                Snackbar.make(binding.root, "Please enter a valid number", Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(binding.root, "Please enter a valid number", Snackbar.LENGTH_SHORT)
+                    .show()
                 return@setOnClickListener
             }
 
             // Get the selected currencies
-            val fromCurrency = currencies[binding.fromCurrencySpinner.selectedItemPosition]
-            val toCurrency = currencies[binding.toCurrencySpinner.selectedItemPosition]
+            val fromCurrency =
+                binding.fromCurrencySpinner.selectedItem.toString().substring(0, 3)
+            val toCurrency = binding.toCurrencySpinner.selectedItem.toString().substring(0, 3)
 
             // Convert the currency using the exchange rate API
-            fetchExchangeRate(fromCurrency, toCurrency, currencyAmount,
+            fetchExchangeRate(
+                fromCurrency,
+                toCurrency,
+                currencyAmount,
                 onSuccess = { convertedAmount, toCurrency ->
                     // Show the converted amount in the resultTextView
                     val result = "$convertedAmount $toCurrency"
@@ -110,7 +102,8 @@ class MainActivity : AppCompatActivity() {
                 onFetchComplete = { message ->
                     // Show the fetch completion message in a Snackbar
                     Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT).show()
-                }
+                },
+                context = this // pass the current context here
             )
         }
 
@@ -119,22 +112,61 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun fetchExchangeRate(fromCurrency: String, toCurrency: String, amount: Double, onSuccess: (Double, String) -> Unit, onError: (String) -> Unit, onFetchComplete: (String) -> Unit) {
+
+    private fun fetchExchangeRate(
+        fromCurrency: String,
+        toCurrency: String,
+        amount: Double,
+        onSuccess: (Double, String) -> Unit,
+        onError: (String) -> Unit,
+        onFetchComplete: (String) -> Unit,
+        context: Context
+    ) {
         CoroutineScope(Dispatchers.IO).launch {
             val url = "https://api.exchangerate-api.com/v4/latest/$fromCurrency"
             try {
-                val apiResult = URL(url).readText()
-                val jsonObject = JSONObject(apiResult)
-                val rates = jsonObject.getJSONObject("rates")
-                val fromRate = rates.getDouble(fromCurrency)
-                val toRate = rates.getDouble(toCurrency)
-                val convertedAmount = amount / fromRate * toRate
-                val result = "$convertedAmount $toCurrency"
-                Log.d("MainActivity", "$amount $fromCurrency = $result")
-                withContext(Dispatchers.Main) {
-                    onSuccess(convertedAmount, toCurrency)
-                    val updateTime = Date().toSimpleString("yyyy-MM-dd HH:mm:ss")
-                    onFetchComplete("Last updated: $updateTime")
+                // 檢查網路連接
+                val connectivityManager =
+                    context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+                val networkInfo = connectivityManager.activeNetworkInfo
+                if (networkInfo != null && networkInfo.isConnected) {
+                    // 如果有網路連接，從網路獲取匯率
+                    val apiResult = URL(url).readText()
+                    val jsonObject = JSONObject(apiResult)
+                    val rates = jsonObject.getJSONObject("rates")
+                    val fromRate = rates.getDouble(fromCurrency)
+                    val toRate = rates.getDouble(toCurrency)
+                    val convertedAmount = amount / fromRate * toRate
+                    val result = "$convertedAmount $toCurrency"
+                    Log.d("MainActivity", "$amount $fromCurrency = $result")
+                    withContext(Dispatchers.Main) {
+                        onSuccess(convertedAmount, toCurrency)
+                        val updateTime = Date().toSimpleString("yyyy-MM-dd HH:mm:ss")
+                        onFetchComplete("Last updated: $updateTime")
+                    }
+                } else {
+                    // 如果沒有網路連接，從本地文件獲取匯率
+                    try {
+                        val file = File(context.filesDir, "exchange_rates.json")
+                        val json = file.readText()
+                        val jsonObject = JSONObject(json)
+                        val rates = jsonObject.getJSONObject("rates")
+                        val fromRate = rates.getDouble(fromCurrency)
+                        val toRate = rates.getDouble(toCurrency)
+                        val convertedAmount = amount / fromRate * toRate
+                        val result = "$convertedAmount $toCurrency"
+                        Log.d("MainActivity", "$amount $fromCurrency = $result")
+                        withContext(Dispatchers.Main) {
+                            onSuccess(convertedAmount, toCurrency)
+                            onFetchComplete("Last updated: N/A")
+                        }
+                    } catch (e: FileNotFoundException) {
+                        // 文件不存在，从assets中读取文件
+                        Log.e("MainActivity", e.toString())
+                        withContext(Dispatchers.Main) {
+                            onError("File not found")
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("MainActivity", e.toString())
@@ -144,6 +176,49 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+
+
+
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+        val networkInfo = connectivityManager?.activeNetworkInfo
+        return networkInfo?.isConnected ?: false
+    }
+
+    private fun readJsonFromAsset(fileName: String): String? {
+        return try {
+            val inputStream = assets.open(fileName)
+            val buffer = ByteArray(inputStream.available())
+            inputStream.read(buffer)
+            inputStream.close()
+            String(buffer, Charsets.UTF_8)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+
+    private fun initialExchangeRate(context: Context) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val url = "https://api.exchangerate-api.com/v4/latest/TWD"
+            try {
+                val apiResult = URL(url).readText()
+                // 將數據寫入本地文件
+                val file = File(context.filesDir, "exchange_rates.json")
+                file.writeText(apiResult)
+
+            } catch (e: Exception) {
+                Log.e("MainActivity", e.toString())
+                withContext(Dispatchers.Main) {
+                }
+            }
+        }
+    }
+
+
+
+
 
 
 }
