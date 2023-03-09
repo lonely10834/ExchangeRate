@@ -3,16 +3,8 @@ package com.example.myapp01
 import android.os.Bundle
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
-import android.view.Menu
-import android.view.MenuItem
 import com.example.myapp01.databinding.ActivityMainBinding
 import android.util.Log
-import android.widget.Button
-import android.widget.EditText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,9 +17,9 @@ import android.widget.ArrayAdapter
 import java.util.Date
 import java.text.SimpleDateFormat
 import java.util.*
-import java.io.FileWriter
 import java.io.File
 import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import java.io.FileNotFoundException
 
 
@@ -129,8 +121,10 @@ class MainActivity : AppCompatActivity() {
                 // 檢查網路連接
                 val connectivityManager =
                     context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-                val networkInfo = connectivityManager.activeNetworkInfo
-                if (networkInfo != null && networkInfo.isConnected) {
+                val network = connectivityManager.activeNetwork
+                val networkCapabilities = connectivityManager.getNetworkCapabilities(network)
+                if (networkCapabilities != null && networkCapabilities.hasCapability(
+                        NetworkCapabilities.NET_CAPABILITY_INTERNET)) {
                     // 如果有網路連接，從網路獲取匯率
                     val apiResult = URL(url).readText()
                     val jsonObject = JSONObject(apiResult)
@@ -179,27 +173,6 @@ class MainActivity : AppCompatActivity() {
                     onError(e.message ?: "Unknown error")
                 }
             }
-        }
-    }
-
-
-
-
-    private fun isNetworkAvailable(): Boolean {
-        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
-        val networkInfo = connectivityManager?.activeNetworkInfo
-        return networkInfo?.isConnected ?: false
-    }
-
-    private fun readJsonFromAsset(fileName: String): String? {
-        return try {
-            val inputStream = assets.open(fileName)
-            val buffer = ByteArray(inputStream.available())
-            inputStream.read(buffer)
-            inputStream.close()
-            String(buffer, Charsets.UTF_8)
-        } catch (e: Exception) {
-            null
         }
     }
 
