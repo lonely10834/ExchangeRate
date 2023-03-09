@@ -37,6 +37,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     // Define a list of currencies to support
     private val currencies = arrayOf("TWD", "USD", "JPY", "CAD")
+    private var buildTime: String? = null
     // Declare a lateinit variable for InputMethodManager
     private lateinit var imm: InputMethodManager
     fun Date.toSimpleString(pattern: String): String {
@@ -142,6 +143,7 @@ class MainActivity : AppCompatActivity() {
                     withContext(Dispatchers.Main) {
                         onSuccess(convertedAmount, toCurrency)
                         val updateTime = Date().toSimpleString("yyyy-MM-dd HH:mm:ss")
+                        buildTime = updateTime
                         onFetchComplete("Last updated: $updateTime")
                     }
                 } else {
@@ -155,10 +157,13 @@ class MainActivity : AppCompatActivity() {
                         val toRate = rates.getDouble(toCurrency)
                         val convertedAmount = amount / fromRate * toRate
                         val result = "$convertedAmount $toCurrency"
+
+                        buildTime = jsonObject.getString("date")
+
                         Log.d("MainActivity", "$amount $fromCurrency = $result")
                         withContext(Dispatchers.Main) {
                             onSuccess(convertedAmount, toCurrency)
-                            onFetchComplete("Last updated: N/A")
+                            onFetchComplete("Last updated(沒有網路連線):$buildTime")
                         }
                     } catch (e: FileNotFoundException) {
                         // 文件不存在，从assets中读取文件
@@ -204,10 +209,11 @@ class MainActivity : AppCompatActivity() {
             val url = "https://api.exchangerate-api.com/v4/latest/TWD"
             try {
                 val apiResult = URL(url).readText()
+                val jsonObject = JSONObject(apiResult)
+                buildTime = jsonObject.getString("date")
                 // 將數據寫入本地文件
                 val file = File(context.filesDir, "exchange_rates.json")
                 file.writeText(apiResult)
-
             } catch (e: Exception) {
                 Log.e("MainActivity", e.toString())
                 withContext(Dispatchers.Main) {
