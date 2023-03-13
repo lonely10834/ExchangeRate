@@ -14,5 +14,6 @@
     <string name="amount_hint">Enter amount</string>
     <string name="result_label">Result:</string>
     <string name="result_hint">Convert to selected currency</string>
+    <string name="result_hint01">Select currency</string>
 
 </resources>

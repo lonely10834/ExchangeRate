@@ -46,6 +46,7 @@ class MainActivity : AppCompatActivity() {
         val currencyEditText = binding.amountEditText
         val convertButton = binding.convertButton
         val resultTextView = binding.resultTextView
+        val resultTextView01 = binding.resultTextView01
         initialExchangeRate(this)
 
         // Initialize InputMethodManager
@@ -83,10 +84,11 @@ class MainActivity : AppCompatActivity() {
                 fromCurrency,
                 toCurrency,
                 currencyAmount,
-                onSuccess = { convertedAmount, toCurrency ->
+                onSuccess = { convertedAmount, toCurrency, toRate ->
                     // Show the converted amount in the resultTextView
                     val result = "$convertedAmount $toCurrency"
                     resultTextView.text = result
+                    resultTextView01.text = "1 $fromCurrency = $toRate $toCurrency"
                 },
                 onError = { error ->
                     // Show an error message in a Snackbar
@@ -110,7 +112,7 @@ class MainActivity : AppCompatActivity() {
         fromCurrency: String,
         toCurrency: String,
         amount: Double,
-        onSuccess: (Double, String) -> Unit,
+        onSuccess: (Double, String, Double) -> Unit,
         onError: (String) -> Unit,
         onFetchComplete: (String) -> Unit,
         context: Context
@@ -135,7 +137,7 @@ class MainActivity : AppCompatActivity() {
                     val result = "$convertedAmount $toCurrency"
                     Log.d("MainActivity", "$amount $fromCurrency = $result")
                     withContext(Dispatchers.Main) {
-                        onSuccess(convertedAmount, toCurrency)
+                        onSuccess(convertedAmount, toCurrency , toRate)
                         val updateTime = Date().toSimpleString("yyyy-MM-dd HH:mm:ss")
                         buildTime = updateTime
                         onFetchComplete("Last updated: $updateTime")
@@ -156,7 +158,7 @@ class MainActivity : AppCompatActivity() {
 
                         Log.d("MainActivity", "$amount $fromCurrency = $result")
                         withContext(Dispatchers.Main) {
-                            onSuccess(convertedAmount, toCurrency)
+                            onSuccess(convertedAmount, toCurrency,toRate)
                             onFetchComplete("Last updated(沒有網路連線):$buildTime")
                         }
                     } catch (e: FileNotFoundException) {
