@@ -1,5 +1,6 @@
 package com.example.myapp01
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
@@ -20,6 +21,8 @@ import java.util.*
 import java.io.File
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.widget.Button
+import android.widget.Spinner
 import java.io.FileNotFoundException
 
 
@@ -32,10 +35,11 @@ class MainActivity : AppCompatActivity() {
     private var buildTime: String? = null
     // Declare a lateinit variable for InputMethodManager
     private lateinit var imm: InputMethodManager
-    fun Date.toSimpleString(pattern: String): String {
+    private fun Date.toSimpleString(pattern: String): String {
         val formatter = SimpleDateFormat(pattern, Locale.getDefault())
         return formatter.format(this)
     }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +51,7 @@ class MainActivity : AppCompatActivity() {
         val convertButton = binding.convertButton
         val resultTextView = binding.resultTextView
         val resultTextView01 = binding.resultTextView01
+        val swapButton = findViewById<Button>(R.id.swap_button)
         initialExchangeRate(this)
 
         // Initialize InputMethodManager
@@ -59,6 +64,15 @@ class MainActivity : AppCompatActivity() {
             binding.toCurrencySpinner.adapter = adapter
         }
 
+
+        swapButton.setOnClickListener {
+            swapSpinnerItems()
+            val fromCurrency = binding.fromCurrencySpinner.selectedItem
+            val toCurrency = binding.toCurrencySpinner.selectedItem
+            binding.fromCurrencySpinner.setSelection(currencies.indexOf(toCurrency))
+            binding.toCurrencySpinner.setSelection(currencies.indexOf(fromCurrency))
+            resultTextView01.text = getString(R.string.exchange_rate_result, fromCurrency, toCurrency)
+        }
 
         convertButton.setOnClickListener {
             // Hide the keyboard
@@ -106,6 +120,28 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.title = "Currency Converter"
     }
 
+    private fun swapSpinnerItems() {
+        val fromSpinner = binding.fromCurrencySpinner
+        val toSpinner = binding.toCurrencySpinner
+
+        val fromIndex = fromSpinner.selectedItemPosition
+        val toIndex = toSpinner.selectedItemPosition
+
+        // Swap the selected items
+        val temp = currencies[fromIndex]
+        currencies[fromIndex] = currencies[toIndex]
+        currencies[toIndex] = temp
+
+        // Update the spinner adapters
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, currencies)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        fromSpinner.adapter = adapter
+        toSpinner.adapter = adapter
+
+        // Set the selected items back to their original positions
+        fromSpinner.setSelection(toIndex, true)
+        toSpinner.setSelection(fromIndex, true)
+    }
 
 
     private fun fetchExchangeRate(

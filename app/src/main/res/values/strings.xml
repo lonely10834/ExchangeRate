@@ -14,6 +14,7 @@
     <string name="amount_hint">Enter amount</string>
     <string name="result_label">Result:</string>
     <string name="result_hint">Convert to selected currency</string>
-    <string name="result_hint01">Select currency</string>
+    <string name="exchange_rate_result">1 %1$s = %2$s</string>
+
 
 </resources>
