@@ -67,11 +67,37 @@ class MainActivity : AppCompatActivity() {
 
         swapButton.setOnClickListener {
             swapSpinnerItems()
-            val fromCurrency = binding.fromCurrencySpinner.selectedItem
-            val toCurrency = binding.toCurrencySpinner.selectedItem
-            binding.fromCurrencySpinner.setSelection(currencies.indexOf(toCurrency))
-            binding.toCurrencySpinner.setSelection(currencies.indexOf(fromCurrency))
-            resultTextView01.text = getString(R.string.exchange_rate_result, fromCurrency, toCurrency)
+            val from_Currency = binding.fromCurrencySpinner.selectedItem
+            val to_Currency = binding.toCurrencySpinner.selectedItem
+            binding.fromCurrencySpinner.setSelection(currencies.indexOf(to_Currency))
+            binding.toCurrencySpinner.setSelection(currencies.indexOf(from_Currency))
+            // Get currency amount from the EditText
+            val currencyAmount = currencyEditText.text.toString().toDoubleOrNull()
+            // If the input is not a valid number, show an error message and return
+            if (currencyAmount == null) {
+                Snackbar.make(binding.root, "Please enter a valid number", Snackbar.LENGTH_SHORT)
+                    .show()
+                return@setOnClickListener
+            }
+            fetchExchangeRate(
+                currencyAmount,
+                onSuccess = { convertedAmount,fromCurrency, toCurrency, toRate ->
+                    // Show the converted amount in the resultTextView
+                    val result = "$convertedAmount $toCurrency"
+                    resultTextView.text = result
+                    resultTextView01.text = "1 $fromCurrency = $toRate $toCurrency"
+                },
+                onError = { error ->
+                    // Show an error message in a Snackbar
+                    Snackbar.make(binding.root, "Error: $error", Snackbar.LENGTH_SHORT).show()
+                },
+                onFetchComplete = { message ->
+                    // Show the fetch completion message in a Snackbar
+                    Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT).show()
+                },
+                context = this // pass the current context here
+            )
+            resultTextView01.text = getString(R.string.exchange_rate_result, from_Currency, to_Currency)
         }
 
         convertButton.setOnClickListener {
@@ -88,17 +114,10 @@ class MainActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Get the selected currencies
-            val fromCurrency =
-                binding.fromCurrencySpinner.selectedItem.toString().substring(0, 3)
-            val toCurrency = binding.toCurrencySpinner.selectedItem.toString().substring(0, 3)
-
             // Convert the currency using the exchange rate API
             fetchExchangeRate(
-                fromCurrency,
-                toCurrency,
                 currencyAmount,
-                onSuccess = { convertedAmount, toCurrency, toRate ->
+                onSuccess = { convertedAmount,fromCurrency, toCurrency, toRate ->
                     // Show the converted amount in the resultTextView
                     val result = "$convertedAmount $toCurrency"
                     resultTextView.text = result
@@ -145,15 +164,19 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun fetchExchangeRate(
-        fromCurrency: String,
-        toCurrency: String,
+//        fromCurrency: String,
+//        toCurrency: String,
         amount: Double,
-        onSuccess: (Double, String, Double) -> Unit,
+        onSuccess: (Double,String, String, Double) -> Unit,
         onError: (String) -> Unit,
         onFetchComplete: (String) -> Unit,
         context: Context
     ) {
         CoroutineScope(Dispatchers.IO).launch {
+            // Get the selected currencies
+            val fromCurrency =
+                binding.fromCurrencySpinner.selectedItem.toString().substring(0, 3)
+            val toCurrency = binding.toCurrencySpinner.selectedItem.toString().substring(0, 3)
             val url = "https://api.exchangerate-api.com/v4/latest/$fromCurrency"
             try {
                 // 檢查網路連接
@@ -173,7 +196,7 @@ class MainActivity : AppCompatActivity() {
                     val result = "$convertedAmount $toCurrency"
                     Log.d("MainActivity", "$amount $fromCurrency = $result")
                     withContext(Dispatchers.Main) {
-                        onSuccess(convertedAmount, toCurrency , toRate)
+                        onSuccess(convertedAmount,fromCurrency, toCurrency , toRate)
                         val updateTime = Date().toSimpleString("yyyy-MM-dd HH:mm:ss")
                         buildTime = updateTime
                         onFetchComplete("Last updated: $updateTime")
@@ -194,7 +217,7 @@ class MainActivity : AppCompatActivity() {
 
                         Log.d("MainActivity", "$amount $fromCurrency = $result")
                         withContext(Dispatchers.Main) {
-                            onSuccess(convertedAmount, toCurrency,toRate)
+                            onSuccess(convertedAmount,fromCurrency, toCurrency,toRate)
                             onFetchComplete("Last updated(沒有網路連線):$buildTime")
                         }
                     } catch (e: FileNotFoundException) {
