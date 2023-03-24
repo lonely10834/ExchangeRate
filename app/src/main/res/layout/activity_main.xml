@@ -8,6 +8,7 @@
     android:padding="16dp"
     tools:context=".MainActivity">
 
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -22,7 +23,6 @@
         android:layout_width="match_parent"
         android:layout_height="104dp"
         android:layout_marginTop="20dp">
-
 
         <Button
             android:id="@+id/swap_button"
@@ -41,8 +41,7 @@
             android:id="@+id/textView1"
             android:layout_width="70dp"
             android:layout_height="50dp"
-            android:layout_marginStart="8dp"
-
+            android:background="@drawable/border"
             android:gravity="center"
             android:text="@string/convert_in"
             android:textSize="20sp"
@@ -51,12 +50,12 @@
 
         <Spinner
             android:id="@+id/from_currency_spinner"
-            android:layout_width="136dp"
+            android:layout_width="124dp"
             android:layout_height="28dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="10dp"
             android:layout_weight="1"
-            android:background="@drawable/border"
+            android:spinnerMode="dropdown"
             app:layout_constraintStart_toEndOf="@+id/textView1"
             app:layout_constraintTop_toTopOf="parent"
             tools:ignore="MissingConstraints" />
@@ -65,8 +64,7 @@
             android:id="@+id/textView2"
             android:layout_width="70dp"
             android:layout_height="50dp"
-            android:layout_marginStart="8dp"
-
+            android:background="@drawable/border"
             android:gravity="center"
             android:text="@string/convert_out"
             android:textSize="20sp"
@@ -75,7 +73,7 @@
 
         <Spinner
             android:id="@+id/to_currency_spinner"
-            android:layout_width="136dp"
+            android:layout_width="124dp"
             android:layout_height="28dp"
             android:layout_marginStart="16dp"
             android:layout_marginBottom="10dp"
@@ -90,7 +88,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="20dp"
         android:orientation="horizontal">
 
         <EditText
@@ -100,6 +98,7 @@
             android:layout_marginTop="20dp"
             android:layout_weight="1"
             android:hint="@string/enter_amount"
+            android:background="@drawable/border"
             android:imeOptions="actionDone"
             android:inputType="numberDecimal"
             android:minHeight="48dp" />
@@ -110,7 +109,7 @@
 
         <Button
             android:id="@+id/convertButton"
-            android:layout_width="wrap_content"
+            android:layout_width="74dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:text="@string/convert" />
@@ -120,7 +119,7 @@
         android:id="@+id/resultLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="10dp"
         android:background="@drawable/border"
         android:text="@string/result_label"
         android:textSize="18sp" />
@@ -129,7 +128,7 @@
         android:id="@+id/resultTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="10dp"
         android:gravity="center"
         android:hint="@string/result_hint"
         android:padding="16dp"
@@ -140,7 +139,7 @@
         android:id="@+id/resultTextView01"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="10dp"
         android:gravity="center"
         android:padding="16dp"
         android:textSize="20sp"
