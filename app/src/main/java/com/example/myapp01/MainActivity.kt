@@ -13,23 +13,27 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.URL
 import android.content.Context
+import android.content.res.Configuration
+import android.graphics.drawable.GradientDrawable
 import android.view.inputmethod.InputMethodManager
-import android.widget.ArrayAdapter
 import java.util.Date
 import java.text.SimpleDateFormat
 import java.util.*
 import java.io.File
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.widget.Button
-import android.widget.Spinner
+import android.view.View
+import android.widget.*
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 import java.io.FileNotFoundException
 
 
 
 class MainActivity : AppCompatActivity() {
-
     private lateinit var binding: ActivityMainBinding
+    private lateinit var editText: EditText
     // Define a list of currencies to support
     private val currencies = arrayOf("TWD", "USD", "JPY", "CAD")
     private var buildTime: String? = null
@@ -45,6 +49,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        val configuration = resources.configuration
+        onConfigurationChanged(configuration)
+
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO) //強制淺色模式
 
         // Get references to UI elements
         val currencyEditText = binding.amountEditText
@@ -52,10 +60,12 @@ class MainActivity : AppCompatActivity() {
         val resultTextView = binding.resultTextView
         val resultTextView01 = binding.resultTextView01
         val swapButton = findViewById<Button>(R.id.swap_button)
+
         initialExchangeRate(this)
 
         // Initialize InputMethodManager
         imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+
 
         // Populate the spinners with currencies
         ArrayAdapter(this, android.R.layout.simple_spinner_item, currencies).also { adapter ->
@@ -64,13 +74,25 @@ class MainActivity : AppCompatActivity() {
             binding.toCurrencySpinner.adapter = adapter
         }
 
+        binding.fromCurrencySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val selectedCurrency = currencies[position]
+                binding.amountEditText.hint = getString(R.string.enter_amount_in, selectedCurrency)
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                // Do nothing
+            }
+        }
 
+
+
+        //按下交換按鈕
         swapButton.setOnClickListener {
             swapSpinnerItems()
-            val from_Currency = binding.fromCurrencySpinner.selectedItem
-            val to_Currency = binding.toCurrencySpinner.selectedItem
-            binding.fromCurrencySpinner.setSelection(currencies.indexOf(to_Currency))
-            binding.toCurrencySpinner.setSelection(currencies.indexOf(from_Currency))
+            val spinnerFromCurrency = binding.fromCurrencySpinner.selectedItem
+            val spinnerToCurrency = binding.toCurrencySpinner.selectedItem
+            binding.fromCurrencySpinner.setSelection(currencies.indexOf(spinnerToCurrency))
+            binding.toCurrencySpinner.setSelection(currencies.indexOf(spinnerFromCurrency))
             // Get currency amount from the EditText
             val currencyAmount = currencyEditText.text.toString().toDoubleOrNull()
             // If the input is not a valid number, show an error message and return
@@ -97,9 +119,9 @@ class MainActivity : AppCompatActivity() {
                 },
                 context = this // pass the current context here
             )
-            resultTextView01.text = getString(R.string.exchange_rate_result, from_Currency, to_Currency)
+            resultTextView01.text = getString(R.string.exchange_rate_result, spinnerFromCurrency, spinnerToCurrency)
         }
-
+        //按下轉換按鈕
         convertButton.setOnClickListener {
             // Hide the keyboard
             imm.hideSoftInputFromWindow(currencyEditText.windowToken, 0)
@@ -160,6 +182,35 @@ class MainActivity : AppCompatActivity() {
         // Set the selected items back to their original positions
         fromSpinner.setSelection(toIndex, true)
         toSpinner.setSelection(fromIndex, true)
+    }
+
+private fun updateBorderColor() {
+    val isDarkMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+    val borderColorResId = if (isDarkMode) R.color.border_color_light else R.color.border_color_dark
+    val borderColorStateList = ContextCompat.getColorStateList(this, borderColorResId)
+    val borderDrawable = ContextCompat.getDrawable(this, R.drawable.border)
+    borderDrawable?.let { drawable ->
+        if (drawable is GradientDrawable) {
+            drawable.setStroke(2, borderColorStateList)
+            drawable.state = intArrayOf(android.R.attr.state_enabled)
+        }
+    }
+    editText.isEnabled = !isDarkMode
+}
+
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        // 獲取當前的深色模式或淺色模式
+        var currentUiMode = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK
+
+        // 使用者改變深色模式與否
+        if (newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK != currentUiMode) {
+            currentUiMode = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK
+            val isDarkMode = currentUiMode == Configuration.UI_MODE_NIGHT_YES
+            updateBorderColor()
+        }
     }
 
 

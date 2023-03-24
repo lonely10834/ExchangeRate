@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Border" parent="@android:style/Widget.EditText">
+        <item name="android:background">@color/border_color</item>
+
+        <item name="android:textColor">@color/black</item>
+
+    </style>
+
+    <style name="Border.Black">
+        <item name="colorPrimary">@color/black</item>
+    </style>
+
+    <style name="Border.White">
+        <item name="colorPrimary">@color/white</item>
+    </style>
+</resources>
+
+

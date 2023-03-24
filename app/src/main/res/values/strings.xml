@@ -12,15 +12,16 @@
     <string name="from_currency_label">From currency:</string>
     <string name="to_currency_label">To currency:</string>
     <string name="amount_hint">Enter amount</string>
-    <string name="result_label">Result:</string>
+    <string name="result_label">轉換結果:</string>
     <string name="result_hint">Convert to selected currency</string>
     <string name="exchange_rate_result">1 %1$s = %2$s</string>
-    <string name="convert">Convert</string>
+    <string name="convert">轉換</string>
     <string name="enter_amount">Enter amount</string>
     <string name="convert_out">轉出</string>
     <string name="convert_in">轉入</string>
     <string name="swap">交換</string>
     <string name="ExchangeRate">國際匯率轉換</string>
+    <string name="enter_amount_in">請輸入%1$s :</string>
 
 
 </resources>
